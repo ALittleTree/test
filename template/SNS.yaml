@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This CF template creates SNS
+Resources:
+  MySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint: "add valid email address"
+        Protocol: email
