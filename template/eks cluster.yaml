@@ -1,12 +1,21 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This CF template creates EKS
+Description: This CF template creates EKS cluster
+Parameters:
+  EKSClusterName:
+    Type: String
+    Default: EKSClusterName
+    Description: EKS Cluster Name
+  RoleArn:
+    Type: String
+    Default: RoleArn
+    Description: the role arn for this eks
 Resources:
   EKSCluster:
       Type: AWS::EKS::Cluster
       Properties:
-        Name: Prod
+        Name: !Ref EKSClusterName
         Version: "1.20"
-        RoleArn: "arn:aws:iam::012345678910:role/eks-service-role-AWSServiceRoleForAmazonEKS-EXAMPLEBQ4PI"
+        RoleArn: !Ref RoleArn
         ResourcesVpcConfig:
           SecurityGroupIds:
             - sg-6979fe18
@@ -15,7 +24,6 @@ Resources:
             - subnet-e7e761ac
           EndpointPublicAccess: false
           EndpointPrivateAccess: true
-          PublicAccessCidrs: [ "1.1.1.2/32" ]
         Logging:
           ClusterLogging:
             EnabledTypes:
@@ -24,19 +32,3 @@ Resources:
         Tags:
           - Key: "key"
             Value: "val"
-
-  EKSNodegroup:
-    Type: 'AWS::EKS::Nodegroup'
-    Properties:
-      ClusterName: prod
-      NodeRole: 'arn:aws:iam::012345678910:role/eksInstanceRole'
-      ScalingConfig:
-        MinSize: 3
-        DesiredSize: 5
-        MaxSize: 7
-      Labels:
-        Key1: Value1
-        Key2: Value2
-      Subnets:
-        - subnet-6782e71e
-        - subnet-e7e761ac

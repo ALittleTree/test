@@ -1,33 +1,66 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS Sample VPC - Private and Public subnets'
-
+Description: 'dev VPC - 2 Private and 2 Public subnets'
+#########################Parameters#########################
 Parameters:
+
+#####VPC Parameters########
+  VpcName:
+    Type: String
+    Default: vpcName
+    Description: The VPC Name
 
   VpcBlock:
     Type: String
-    Default: 192.168.0.0/16
+    Default: 172.30.97.0/24
     Description: The CIDR range for the VPC. This should be a valid private (RFC 1918) CIDR range.
+
+  TransitGatewayId:
+    Type: String
+    Description: The ID of a transit gateway.
+
+#######
 
   PublicSubnet01Block:
     Type: String
     Default: 192.168.0.0/18
     Description: CidrBlock for public subnet 01 within the VPC
+  
+  PublicSubnet01Name:
+    Type: String
+    Defualt: Subnet01
+    Descrition: Subnet01 Name
 
   PublicSubnet02Block:
     Type: String
     Default: 192.168.64.0/18
     Description: CidrBlock for public subnet 02 within the VPC
 
+  PublicSubnet02Name:
+    Type: String
+    Default: Subnet02
+    Descrition: Subnet02 Name
+
   PrivateSubnet01Block:
     Type: String
     Default: 192.168.128.0/18
     Description: CidrBlock for private subnet 01 within the VPC
 
+    
+  PrivateSubnet01Name:
+    Type: String
+    Default: PrivateSubnet01Name
+    Descrition: PrivateSubnet01Name
+
   PrivateSubnet02Block:
     Type: String
     Default: 192.168.192.0/18
     Description: CidrBlock for private subnet 02 within the VPC
+  
+  PrivateSubnet02Name:
+  Type: String
+  Default: PrivateSubnet02Name
+  Descrition: PrivateSubnet02Name
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -51,16 +84,9 @@ Resources:
       EnableDnsHostnames: true
       Tags:
       - Key: Name
-        Value: !Sub '${AWS::StackName}-VPC'
+        Value: !Ref VpcName
 
-  InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-
-  VPCGatewayAttachment:
-    Type: "AWS::EC2::VPCGatewayAttachment"
-    Properties:
-      InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref VPC
+#####################RouteTable#########################
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -68,97 +94,16 @@ Resources:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: Public Subnets
-      - Key: Network
-        Value: Public
-
-  PrivateRouteTable01:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-      - Key: Name
-        Value: Private Subnet AZ1
-      - Key: Network
-        Value: Private01
-
-  PrivateRouteTable02:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-      - Key: Name
-        Value: Private Subnet AZ2
-      - Key: Network
-        Value: Private02
+        Value: !Ref VpcName
 
   PublicRoute:
-    DependsOn: VPCGatewayAttachment
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
+      TransitGatewayId: !Ref TransitGatewayId
 
-  PrivateRoute01:
-    DependsOn:
-    - VPCGatewayAttachment
-    - NatGateway01
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable01
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway01
-
-  PrivateRoute02:
-    DependsOn:
-    - VPCGatewayAttachment
-    - NatGateway02
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable02
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway02
-
-  NatGateway01:
-    DependsOn:
-    - NatGatewayEIP1
-    - PublicSubnet01
-    - VPCGatewayAttachment
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt 'NatGatewayEIP1.AllocationId'
-      SubnetId: !Ref PublicSubnet01
-      Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-NatGatewayAZ1'
-
-  NatGateway02:
-    DependsOn:
-    - NatGatewayEIP2
-    - PublicSubnet02
-    - VPCGatewayAttachment
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt 'NatGatewayEIP2.AllocationId'
-      SubnetId: !Ref PublicSubnet02
-      Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-NatGatewayAZ2'
-
-  NatGatewayEIP1:
-    DependsOn:
-    - VPCGatewayAttachment
-    Type: 'AWS::EC2::EIP'
-    Properties:
-      Domain: vpc
-
-  NatGatewayEIP2:
-    DependsOn:
-    - VPCGatewayAttachment
-    Type: 'AWS::EC2::EIP'
-    Properties:
-      Domain: vpc
+######################Subnet##########################
 
   PublicSubnet01:
     Type: AWS::EC2::Subnet
@@ -177,7 +122,7 @@ Resources:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Sub "${AWS::StackName}-PublicSubnet01"
+        Value: !Ref PublicSubnet01Name
       - Key: kubernetes.io/role/elb
         Value: 1
 
@@ -198,7 +143,7 @@ Resources:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Sub "${AWS::StackName}-PublicSubnet02"
+        Value: !Ref PublicSubnet02Name
       - Key: kubernetes.io/role/elb
         Value: 1
 
@@ -218,7 +163,7 @@ Resources:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Sub "${AWS::StackName}-PrivateSubnet01"
+        Value: !Ref PrivateSubnet01Name
       - Key: kubernetes.io/role/internal-elb
         Value: 1
 
@@ -238,7 +183,7 @@ Resources:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Sub "${AWS::StackName}-PrivateSubnet02"
+        Value: !Ref PrivateSubnet02Name
       - Key: kubernetes.io/role/internal-elb
         Value: 1
 
@@ -258,13 +203,13 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet01
-      RouteTableId: !Ref PrivateRouteTable01
+      RouteTableId: !Ref PublicRouteTable
 
   PrivateSubnet02RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet02
-      RouteTableId: !Ref PrivateRouteTable02
+      RouteTableId: !Ref PublicRouteTable
 
   ControlPlaneSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -272,6 +217,35 @@ Resources:
       GroupDescription: Cluster communication with worker nodes
       VpcId: !Ref VPC
 
+
+  VPCNetworkAcl:
+  Type: AWS::EC2::NetworkAcl
+  Properties:
+      VpcId:
+        Ref: VPC
+ 
+  InboundRule:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+       NetworkAclId:
+         Ref: VPCNetworkAcl
+       RuleNumber: 100
+       Protocol: -1
+       RuleAction: allow
+       CidrBlock: 0.0.0.0/0
+
+
+  OutboundRule:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+       NetworkAclId:
+         Ref: VPCNetworkAcl
+       RuleNumber: 100
+       Protocol: -1
+       Egress: true
+       RuleAction: allow
+       CidrBlock: 0.0.0.0/0
+       
 Outputs:
 
   SubnetIds:
