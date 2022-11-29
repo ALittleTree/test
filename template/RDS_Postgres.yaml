@@ -1,11 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Metadata: 
   License: Apache-2.0
-Description: 'AWS CloudFormation Sample Template RDS_MySQL_With_Read_Replica: Sample
-  template showing how to create a highly-available, RDS DBInstance with a read replica.
-  **WARNING** This template creates an Amazon Relational Database Service database
-  instance and Amazon CloudWatch alarms. You will be billed for the AWS resources
-  used if you create a stack from this template.'
+Description: 'AWS CloudFormation For RDS'
 Parameters:
   DBName:
     Default: MyDatabase
@@ -76,8 +72,8 @@ Resources:
       GroupDescription: Open database for access
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: '3306'
-        ToPort: '3306'
+        FromPort: '5432'
+        ToPort: '5432'
         SourceSecurityGroupName: !Ref 'EC2SecurityGroup'
   DBSecurityGroup:
     Type: AWS::RDS::DBSecurityGroup
@@ -107,8 +103,4 @@ Outputs:
   EC2Platform:
     Description: Platform in which this stack is deployed
     Value: !If [Is-EC2-VPC, EC2-VPC, EC2-Classic]
-  PostgresRDS:
-    Description: JDBC connection string for the master database
-    Value: !Join ['', ['jdbc:mysql://', !GetAtt [PostgresRDS, Endpoint.Address], ':',
-        !GetAtt [PostgresRDS, Endpoint.Port], /, !Ref 'DBName']]
 
