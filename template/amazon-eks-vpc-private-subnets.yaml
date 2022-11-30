@@ -26,6 +26,23 @@ Parameters:
     Type: String
     Description: The ID of a transit gateway.
 
+  CFVPCEndpointSecurityGroupId:
+    Type: String
+    Description: The ID of security group for cloudformation vpc endpoint.
+  
+  ECRVPCEndpointSecurityGroupId:
+    Type: String
+    Description: The ID of security group for ECR vpc endpoint.  
+  
+  EC2VPCEndpointSecurityGroupId:
+    Type: String
+    Description: The ID of security group for EC2 vpc endpoint. 
+
+  ECRAPIVPCEndpointSecurityGroupId:
+    Type: String
+    Description: The ID of security group for ECR api vpc endpoint.  
+
+
 #######SubNet Parameters##########
 
   Subnet01Block:
@@ -107,8 +124,10 @@ Metadata:
 ######################Conditions#######################
 
 Conditions:
-  Is-DEV: !Or [!Equals [!Ref Environment, 'dev'],!Equals [!Ref Environment, 'pre']]
-  Is-NotDev: !Not [{Condition: Is-DEV}]
+  Is-DEVOrPre: !Or [!Equals [!Ref Environment, dev],!Equals [!Ref Environment, pre]]
+  Is-NotDEVOrPre: !Not [{Condition: Is-DEVOrPre}]
+  Is-NotDev: !Not [!Equals [!Ref Environment, dev]]
+  
 
 ######################Resources#######################
 Resources:
@@ -225,7 +244,7 @@ Resources:
 
   Subnet05:
     Type: AWS::EC2::Subnet
-    Condition: Is-NotDev
+    Condition: Is-NotDEVOrPre
     Metadata:
       Comment: Subnet 05
     Properties:
@@ -246,7 +265,7 @@ Resources:
     
   Subnet06:
     Type: AWS::EC2::Subnet
-    Condition: Is-NotDev
+    Condition: Is-NotDEVOrPre
     Metadata:
       Comment: Subnet 06
     Properties:
@@ -292,14 +311,14 @@ Resources:
 
   Subnet05RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: Is-NotDev
+    Condition: Is-NotDEVOrPre
     Properties:
       SubnetId: !Ref Subnet05
       RouteTableId: !Ref VPCRouteTable
 
   Subnet06RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: Is-NotDev
+    Condition: Is-NotDEVOrPre
     Properties:
       SubnetId: !Ref Subnet06
       RouteTableId: !Ref VPCRouteTable
@@ -339,6 +358,107 @@ Resources:
        RuleAction: allow
        CidrBlock: 0.0.0.0/0
        
+########################VPCEndpoint#####################
+  S3VPCEndpoint:
+    Condition: Is-NotDev
+    DependsOn: 
+      - VPC
+      - Subnet01
+      - Subnet02
+      - Subnet03
+      - Subnet04
+      - Subnet05
+      - Subnet06
+      - VPCRouteTable
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: True
+      RouteTableIds: 
+        - !Ref VPCRouteTable
+      ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      VpcId: !Ref VPC
+
+  CFVPCEndpoint:
+    Condition: Is-NotDev
+    DependsOn: 
+      - VPC
+      - Subnet01
+      - Subnet02
+      - Subnet03
+      - VPCRouteTable
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: True
+      ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.cloudformation'
+      SubnetIds: 
+        - !Ref Subnet01
+        - !Ref Subnet02
+        - !Ref Subnet03
+      SecurityGroupIds: !Ref CFVPCEndpointSecurityGroupId
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  ECRVPCEndpoint:
+    Condition: Is-NotDev
+    DependsOn: 
+      - VPC
+      - Subnet01
+      - Subnet02
+      - Subnet03
+      - VPCRouteTable
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: True
+      ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
+      SubnetIds: 
+        - !Ref Subnet01
+        - !Ref Subnet02
+        - !Ref Subnet03
+      SecurityGroupIds: !Ref ECRVPCEndpointSecurityGroupId
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  EC2VPCEndpoint:
+    Condition: Is-NotDev
+    DependsOn: 
+      - VPC
+      - Subnet01
+      - Subnet02
+      - Subnet03
+      - VPCRouteTable
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: True
+      ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ec2'
+      SubnetIds: 
+        - !Ref Subnet01
+        - !Ref Subnet02
+        - !Ref Subnet03
+      SecurityGroupIds: !Ref EC2VPCEndpointSecurityGroupId
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC 
+  
+  ECRAPIVPCEndpoint:
+    Condition: Is-NotDev
+    DependsOn: 
+      - VPC
+      - Subnet01
+      - Subnet02
+      - Subnet03
+      - VPCRouteTable
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      PrivateDnsEnabled: True
+      ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
+      SubnetIds: 
+        - !Ref Subnet01
+        - !Ref Subnet02
+        - !Ref Subnet03
+      SecurityGroupIds: !Ref ECRAPIVPCEndpointSecurityGroupId
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC 
+  
 Outputs:
 
   SubnetIds:
