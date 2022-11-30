@@ -1,8 +1,15 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'dev VPC - 2 Private and 2 Public subnets'
+Description: 'dev VPC have 4 subnet, other have 6 subnet'
 #########################Parameters#########################
 Parameters:
+
+  Environment:
+  Description: dev\pre\qua\prod
+  Type: String
+  Default: dev
+  AllowedValues: [dev,pre,prd,qua]
+  ConstraintDescription: must select a valid database instance type.
 
 #####VPC Parameters########
   VpcName:
@@ -19,48 +26,68 @@ Parameters:
     Type: String
     Description: The ID of a transit gateway.
 
-#######
+#######SubNet Parameters##########
 
-  PublicSubnet01Block:
+  Subnet01Block:
     Type: String
     Default: 192.168.0.0/18
-    Description: CidrBlock for public subnet 01 within the VPC
+    Description: CidrBlock for  subnet 01 within the VPC
   
-  PublicSubnet01Name:
+  Subnet01Name:
     Type: String
     Defualt: Subnet01
     Descrition: Subnet01 Name
 
-  PublicSubnet02Block:
+  Subnet02Block:
     Type: String
     Default: 192.168.64.0/18
-    Description: CidrBlock for public subnet 02 within the VPC
+    Description: CidrBlock for subnet 02 within the VPC
 
-  PublicSubnet02Name:
+  Subnet02Name:
     Type: String
     Default: Subnet02
     Descrition: Subnet02 Name
 
-  PrivateSubnet01Block:
+  Subnet03Block:
     Type: String
     Default: 192.168.128.0/18
-    Description: CidrBlock for private subnet 01 within the VPC
+    Description: CidrBlock for subnet 03 within the VPC
 
     
-  PrivateSubnet01Name:
+  Subnet03Name:
     Type: String
-    Default: PrivateSubnet01Name
-    Descrition: PrivateSubnet01Name
+    Default: Subnet03Name
+    Descrition: Subnet03 Name
 
-  PrivateSubnet02Block:
+  Subnet04Block:
     Type: String
     Default: 192.168.192.0/18
-    Description: CidrBlock for private subnet 02 within the VPC
+    Description: CidrBlock for subnet 03 within the VPC
   
-  PrivateSubnet02Name:
-  Type: String
-  Default: PrivateSubnet02Name
-  Descrition: PrivateSubnet02Name
+  Subnet04Name:
+    Type: String
+    Default: Subnet04
+    Descrition: Subnet04 Name
+
+  Subnet05Block:
+    Type: String
+    Default: 192.168.192.0/18
+    Description: CidrBlock for subnet 05 within the VPC
+  
+  Subnet05Name:
+    Type: String
+    Default: Subnet05
+    Descrition: Subnet05 Name
+
+  Subnet06Block:
+    Type: String
+    Default: 192.168.192.0/18
+    Description: CidrBlock for subnet 06 within the VPC
+  
+  Subnet06Name:
+    Type: String
+    Default: Subnet06
+    Descrition: Subnet06 Name
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -70,11 +97,19 @@ Metadata:
           default: "Worker Network Configuration"
         Parameters:
           - VpcBlock
-          - PublicSubnet01Block
-          - PublicSubnet02Block
-          - PrivateSubnet01Block
-          - PrivateSubnet02Block
+          - Subnet01Block
+          - Subnet02Block
+          - Subnet03Block
+          - Subnet04Block
+          - Subnet05Block
+          - Subnet06Block
 
+######################Conditions#######################
+
+Conditions:
+  Is-DEV: !Or [!Equals [!Ref 'Environment', dev],!Equals [!Ref 'Environment', pre]]
+
+######################Resources#######################
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -88,7 +123,7 @@ Resources:
 
 #####################RouteTable#########################
 
-  PublicRouteTable:
+  VPCRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -96,16 +131,16 @@ Resources:
       - Key: Name
         Value: !Ref VpcName
 
-  PublicRoute:
+  VPCRoute:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref VPCRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       TransitGatewayId: !Ref TransitGatewayId
 
 ######################Subnet##########################
 
-  PublicSubnet01:
+  Subnet01:
     Type: AWS::EC2::Subnet
     Metadata:
       Comment: Subnet 01
@@ -117,16 +152,16 @@ Resources:
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
-        Ref: PublicSubnet01Block
+        Ref: Subnet01Block
       VpcId:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Ref PublicSubnet01Name
+        Value: !Ref Subnet01Name
       - Key: kubernetes.io/role/elb
         Value: 1
 
-  PublicSubnet02:
+  Subnet02:
     Type: AWS::EC2::Subnet
     Metadata:
       Comment: Subnet 02
@@ -138,16 +173,16 @@ Resources:
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
-        Ref: PublicSubnet02Block
+        Ref: Subnet02Block
       VpcId:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Ref PublicSubnet02Name
+        Value: !Ref Subnet02Name
       - Key: kubernetes.io/role/elb
         Value: 1
 
-  PrivateSubnet01:
+  Subnet03:
     Type: AWS::EC2::Subnet
     Metadata:
       Comment: Subnet 03
@@ -158,19 +193,19 @@ Resources:
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
-        Ref: PrivateSubnet01Block
+        Ref: Subnet03Block
       VpcId:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Ref PrivateSubnet01Name
+        Value: !Ref Subnet03Name
       - Key: kubernetes.io/role/internal-elb
         Value: 1
 
-  PrivateSubnet02:
+  Subnet04:
     Type: AWS::EC2::Subnet
     Metadata:
-      Comment: Private Subnet 02
+      Comment: Subnet 04
     Properties:
       AvailabilityZone:
         Fn::Select:
@@ -178,38 +213,95 @@ Resources:
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
-        Ref: PrivateSubnet02Block
+        Ref: Subnet04Block
       VpcId:
         Ref: VPC
       Tags:
       - Key: Name
-        Value: !Ref PrivateSubnet02Name
+        Value: !Ref Subnet04Name
       - Key: kubernetes.io/role/internal-elb
         Value: 1
 
-  PublicSubnet01RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  Subnet05:
+    Type: AWS::EC2::Subnet
+    Condition: !Not [{Condition: Is-DEV}] 
+    Metadata:
+      Comment: Subnet 05
     Properties:
-      SubnetId: !Ref PublicSubnet01
-      RouteTableId: !Ref PublicRouteTable
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Ref: Subnet05Block
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet05Name
+      - Key: kubernetes.io/role/internal-elb
+        Value: 1
+    
+    Subnet06:
+    Type: AWS::EC2::Subnet
+    Condition: !Not [{Condition: Is-DEV}] 
+    Metadata:
+      Comment: Subnet 06
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Ref: Subnet06Block
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet06Name
+      - Key: kubernetes.io/role/internal-elb
+        Value: 1
 
-  PublicSubnet02RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet02
-      RouteTableId: !Ref PublicRouteTable
 
-  PrivateSubnet01RouteTableAssociation:
+  Subnet01RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet01
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref Subnet01
+      RouteTableId: !Ref VPCRouteTable
 
-  PrivateSubnet02RouteTableAssociation:
+  Subnet02RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet02
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref Subnet02
+      RouteTableId: !Ref VPCRouteTable
+
+  Subnet03RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet03
+      RouteTableId: !Ref VPCRouteTable
+
+  Subnet04RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet04
+      RouteTableId: !Ref VPCRouteTable
+
+  Subnet05RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: !Not [{Condition: Is-DEV}] 
+    Properties:
+      SubnetId: !Ref Subnet05
+      RouteTableId: !Ref VPCRouteTable
+
+  Subnet06RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: !Not [{Condition: Is-DEV}]
+    Properties:
+      SubnetId: !Ref Subnet06
+      RouteTableId: !Ref VPCRouteTable
 
   ControlPlaneSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -250,7 +342,7 @@ Outputs:
 
   SubnetIds:
     Description: Subnets IDs in the VPC
-    Value: !Join [ ",", [ !Ref PublicSubnet01, !Ref PublicSubnet02, !Ref PrivateSubnet01, !Ref PrivateSubnet02 ] ]
+    Value: !Join [ ",", [ !Ref Subnet01, !Ref Subnet02, !Ref Subnet03, !Ref Subnet04 ] ]
 
   SecurityGroups:
     Description: Security group for the cluster control plane communication with worker nodes
