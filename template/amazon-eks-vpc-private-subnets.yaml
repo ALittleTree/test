@@ -5,11 +5,11 @@ Description: 'dev VPC have 4 subnet, other have 6 subnet'
 Parameters:
 
   Environment:
-  Description: dev\pre\qua\prod
-  Type: String
-  Default: dev
-  AllowedValues: [dev,pre,prd,qua]
-  ConstraintDescription: must select a valid database instance type.
+    Description: dev\pre\qua\prod
+    Type: String
+    Default: dev
+    AllowedValues: ['dev','pre','prd','qua']
+    ConstraintDescription: must select a valid database instance type.
 
 #####VPC Parameters########
   VpcName:
@@ -35,8 +35,8 @@ Parameters:
   
   Subnet01Name:
     Type: String
-    Defualt: Subnet01
-    Descrition: Subnet01 Name
+    Default: Subnet01
+    Description: Subnet01 Name
 
   Subnet02Block:
     Type: String
@@ -46,7 +46,7 @@ Parameters:
   Subnet02Name:
     Type: String
     Default: Subnet02
-    Descrition: Subnet02 Name
+    Description: Subnet02 Name
 
   Subnet03Block:
     Type: String
@@ -57,7 +57,7 @@ Parameters:
   Subnet03Name:
     Type: String
     Default: Subnet03Name
-    Descrition: Subnet03 Name
+    Description: Subnet03 Name
 
   Subnet04Block:
     Type: String
@@ -67,7 +67,7 @@ Parameters:
   Subnet04Name:
     Type: String
     Default: Subnet04
-    Descrition: Subnet04 Name
+    Description: Subnet04 Name
 
   Subnet05Block:
     Type: String
@@ -77,7 +77,7 @@ Parameters:
   Subnet05Name:
     Type: String
     Default: Subnet05
-    Descrition: Subnet05 Name
+    Description: Subnet05 Name
 
   Subnet06Block:
     Type: String
@@ -87,7 +87,7 @@ Parameters:
   Subnet06Name:
     Type: String
     Default: Subnet06
-    Descrition: Subnet06 Name
+    Description: Subnet06 Name
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -107,7 +107,8 @@ Metadata:
 ######################Conditions#######################
 
 Conditions:
-  Is-DEV: !Or [!Equals [!Ref 'Environment', dev],!Equals [!Ref 'Environment', pre]]
+  Is-DEV: !Or [!Equals [!Ref Environment, 'dev'],!Equals [!Ref Environment, 'pre']]
+  Is-NotDev: !Not [{Condition: Is-DEV}]
 
 ######################Resources#######################
 Resources:
@@ -224,7 +225,7 @@ Resources:
 
   Subnet05:
     Type: AWS::EC2::Subnet
-    Condition: !Not [{Condition: Is-DEV}] 
+    Condition: Is-NotDev
     Metadata:
       Comment: Subnet 05
     Properties:
@@ -243,9 +244,9 @@ Resources:
       - Key: kubernetes.io/role/internal-elb
         Value: 1
     
-    Subnet06:
+  Subnet06:
     Type: AWS::EC2::Subnet
-    Condition: !Not [{Condition: Is-DEV}] 
+    Condition: Is-NotDev
     Metadata:
       Comment: Subnet 06
     Properties:
@@ -291,14 +292,14 @@ Resources:
 
   Subnet05RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: !Not [{Condition: Is-DEV}] 
+    Condition: Is-NotDev
     Properties:
       SubnetId: !Ref Subnet05
       RouteTableId: !Ref VPCRouteTable
 
   Subnet06RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: !Not [{Condition: Is-DEV}]
+    Condition: Is-NotDev
     Properties:
       SubnetId: !Ref Subnet06
       RouteTableId: !Ref VPCRouteTable
@@ -311,11 +312,11 @@ Resources:
 
 
   VPCNetworkAcl:
-  Type: AWS::EC2::NetworkAcl
-  Properties:
-      VpcId:
-        Ref: VPC
- 
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+        VpcId:
+          Ref: VPC
+  
   InboundRule:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
