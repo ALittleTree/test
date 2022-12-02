@@ -9,7 +9,6 @@ Parameters:
     Type: String
     Default: dev
     AllowedValues: ['dev','pre','prd','qua']
-    ConstraintDescription: must select a valid database instance type.
 
 #####VPC Parameters########
   VpcName:
@@ -323,12 +322,29 @@ Resources:
       SubnetId: !Ref Subnet06
       RouteTableId: !Ref VPCRouteTable
 
-  ControlPlaneSecurityGroup:
+###############SecurityGroup#####################
+
+  TempAllTrafficSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Cluster communication with worker nodes
+      GroupDescription: temp all traffic
       VpcId: !Ref VPC
+      GroupName: !Sub AllTraffic - ${Environment}
 
+
+  CFNSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub CFN - ${Environment}
+      VpcId: !Ref VPC
+      GroupName: !Sub CFN - ${Environment}
+  
+  CFNSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: !Sub CFN - ${Environment}
+    VpcId: !Ref VPC
+    GroupName: !Sub CFN - ${Environment}
 
   VPCNetworkAcl:
     Type: AWS::EC2::NetworkAcl

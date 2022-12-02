@@ -1,25 +1,22 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: This CF template creates ECR
+Parameters:
+  RepositoryName:
+    Type: String
+    Description: Repositry Name
+  ScanOnPush:
+    Type: Boolen
+    Description: scan on push or not
+    AllowedValues:
+      - true
+      - false
+
 Resources:
   MyRepository: 
     Type: AWS::ECR::Repository
     Properties: 
-      RepositoryName: "test-repository"
-      RepositoryPolicyText: 
-        Version: "2012-10-17"
-        Statement: 
-          - 
-            Sid: AllowPushPull
-            Effect: Allow
-            Principal: 
-              AWS: 
-                - "arn:aws:iam::123456789012:user/Bob"
-                - "arn:aws:iam::123456789012:user/Alice"
-            Action: 
-              - "ecr:GetDownloadUrlForLayer"
-              - "ecr:BatchGetImage"
-              - "ecr:BatchCheckLayerAvailability"
-              - "ecr:PutImage"
-              - "ecr:InitiateLayerUpload"
-              - "ecr:UploadLayerPart"
-              - "ecr:CompleteLayerUpload"
+      RepositoryName: !Ref RepositoryName
+      ImageScanningConfiguration: 
+        ScanOnPush: !Ref ScanOnPush
+      EncryptionConfiguration:
+        EncryptionType: AES256

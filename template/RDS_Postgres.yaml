@@ -3,6 +3,11 @@ Metadata:
   License: Apache-2.0
 Description: 'AWS CloudFormation For RDS'
 Parameters:
+  Environment:
+    Description: dev\pre\qua\prod
+    Type: String
+    Default: dev
+    AllowedValues: ['dev','pre','prd','qua']
   DBName:
     Default: MyDatabase
     Description: The database name
@@ -69,7 +74,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Condition: Is-EC2-VPC
     Properties:
-      GroupDescription: Open database for access
+      GroupName: !Sub postgres-sdp-${Environment}-sg
+      GroupDescription: Created by RDS management console
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '5432'
