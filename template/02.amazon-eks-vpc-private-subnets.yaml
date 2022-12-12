@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'dev VPC have 4 subnet, other have 6 subnet'
 #########################Parameters#########################
@@ -25,23 +24,9 @@ Parameters:
     Type: String
     Description: The ID of a transit gateway.
 
-  CFVPCEndpointSecurityGroupId:
+  PrefixListId:
     Type: String
-    Description: The ID of security group for cloudformation vpc endpoint.
-  
-  ECRVPCEndpointSecurityGroupId:
-    Type: String
-    Description: The ID of security group for ECR vpc endpoint.  
-  
-  EC2VPCEndpointSecurityGroupId:
-    Type: String
-    Description: The ID of security group for EC2 vpc endpoint. 
-
-  ECRAPIVPCEndpointSecurityGroupId:
-    Type: String
-    Description: The ID of security group for ECR api vpc endpoint.  
-
-
+    Description: The ID of a prefix list.
 #######SubNet Parameters##########
 
   Subnet01Block:
@@ -156,6 +141,15 @@ Resources:
       RouteTableId: !Ref VPCRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       TransitGatewayId: !Ref TransitGatewayId
+  
+  VPCRoute:
+    DependsOn: S3VPCEndpoint
+    Condition: Is-NotDEV
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref VPCRouteTable
+      DestinationCidrBlock: !Ref PrefixListId
+      VpcEndpointId: !Ref S3VPCEndpoint
 
 ######################Subnet##########################
 
@@ -339,12 +333,19 @@ Resources:
       VpcId: !Ref VPC
       GroupName: !Sub CFN - ${Environment}
   
-  CFNSecurityGroup:
-  Type: AWS::EC2::SecurityGroup
-  Properties:
-    GroupDescription: !Sub CFN - ${Environment}
-    VpcId: !Ref VPC
-    GroupName: !Sub CFN - ${Environment}
+  ECRVPCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ECR-VPC-sg - ${Environment}
+      VpcId: !Ref VPC
+      GroupName: !Sub ECR-VPC-sg - ${Environment}
+
+  EC2VPCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub EC2 - sdp - ${Environment}
+      VpcId: !Ref VPC
+      GroupName: !Sub EC2 - sdp - ${Environment}
 
   VPCNetworkAcl:
     Type: AWS::EC2::NetworkAcl
@@ -411,7 +412,7 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref CFVPCEndpointSecurityGroupId
+      SecurityGroupIds: !Ref CFNSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -431,7 +432,7 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref ECRVPCEndpointSecurityGroupId
+      SecurityGroupIds: !Ref ECRVPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -451,7 +452,7 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref EC2VPCEndpointSecurityGroupId
+      SecurityGroupIds: !Ref EC2VPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC 
   
@@ -471,7 +472,7 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref ECRAPIVPCEndpointSecurityGroupId
+      SecurityGroupIds: !Ref ECRVPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC 
   

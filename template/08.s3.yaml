@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This CF template creates S3 bucket along with bucket policy. That will have different resrictions and services depending on the Dataclassification in the bucket.
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: Specify S3 Bucket Name. 
+
+########################## Resources ###########################################
+
+Resources:
+
+  S3Bucket:
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['-',[ !Ref 'AWS::AccountId' , !Ref 'AWS::Region', !Ref S3BucketName]]
+
+
+############################## Outputs #########################################
+Outputs:
+  S3BucketName:
+    Description: S3 bucket Name
+    Value: !Join ['',[!Ref 'AWS::AccountId' , '-', !Ref 'AWS::Region' ,'-', !Ref "S3BucketName"]]
