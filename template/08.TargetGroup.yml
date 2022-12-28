@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Target Group for NLB
+Parameters:
+  VPCId:
+    Description: Please provide a VPC to deploy the solution into.
+    Type: AWS::EC2::VPC::Id
+  SimpleADPriID:
+    Description: traget group instance id
+    Type: String
+  SimpleADSecID:
+    Description: traget group instance id
+    Type: String
+  SimpleADThrID:
+    Description: traget group instance id
+    Type: String
+  NLBId:
+    Description: NLB od
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer::Id
+  Environment:
+    Description: dev\pre\qua\prod
+    Type: String
+    Default: dev
+    AllowedValues: ['dev','pre','prd','qua']
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Network Configuration
+      Parameters:
+      - VPCId
+      - SimpleADPriID
+      - SimpleADSecID
+      - SimpleADThrID
+      - NLBId
+      - Environment
+    ParameterLabels:
+      VPCId:
+        default: Target VPC for solutiont
+      SimpleADPriID:
+        default: Primary Simple AD Server IP
+      SimpleADSecID:
+        default: Secondary Simple AD Server IP
+      SimpleADThrID:
+        default: Thrid Simple AD Server IP        
+      NLBId:
+        default: ARN for SSL Certificate
+Resources:
+  NetworkLoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Join ["-" , [!Ref 'AWS::StackName', Target]]
+      Port: 31138
+      Protocol: TCP
+      VpcId: !Ref VPCId
+      HealthCheckEnabled: True
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPort: 31530
+      HealthCheckProtocol: TCP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 6
+      Targets:
+        - Id: !Ref SimpleADPriIP
+          Port: 31138
+        - Id: !Ref SimpleADSecIP
+          Port: 31138
+      TargetType: instance
+  NetworkLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NetworkLoadBalancerTargetGroup
+      LoadBalancerArn: !Ref NLBId
+      Port: '8883'
+      Protocol: TCP
+
+Outputs:
+  LDAPSURL:
+    Description: LDAPS Route53 Alias Target
+    Value: !GetAtt NetworkLoadBalancer.DNSName

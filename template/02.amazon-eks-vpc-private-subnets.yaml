@@ -24,9 +24,10 @@ Parameters:
     Type: String
     Description: The ID of a transit gateway.
 
-  PrefixListId:
-    Type: String
-    Description: The ID of a prefix list.
+#  PrefixListId:
+#    Type: String
+#    Description: The ID of a prefix list.
+
 #######SubNet Parameters##########
 
   Subnet01Block:
@@ -125,9 +126,31 @@ Resources:
       - Key: Name
         Value: !Ref VpcName
 
+#######################VPC##############################
+  TransitGatewayAttachment:
+    DependsOn:
+      - VPC
+      - Subnet03
+      - Subnet04
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties: 
+      Options: 
+        ApplianceModeSupport: disable
+        DnsSupport: enable
+        Ipv6Support: disable
+      SubnetIds: 
+        !If [Is-DEVOrPre,[!Ref Subnet03,!Ref Subnet04],[!Ref Subnet03,!Ref Subnet04,!Ref Subnet05]]
+      Tags: 
+      - Key: Name
+        Value: !Join [" - ",["SDP",!Ref Environment] ]
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !Ref VPC
+
 #####################RouteTable#########################
 
   VPCRouteTable:
+    DependsOn:
+      - TransitGatewayAttachment
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -142,14 +165,14 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       TransitGatewayId: !Ref TransitGatewayId
   
-  VPCRoute:
-    DependsOn: S3VPCEndpoint
-    Condition: Is-NotDEV
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref VPCRouteTable
-      DestinationCidrBlock: !Ref PrefixListId
-      VpcEndpointId: !Ref S3VPCEndpoint
+  # VPCRoute:
+  #   DependsOn: S3VPCEndpoint
+  #   Condition: Is-NotDev
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref VPCRouteTable
+  #     DestinationCidrBlock: !Ref PrefixListId
+  #     VpcEndpointId: !Ref S3VPCEndpoint
 
 ######################Subnet##########################
 
@@ -202,7 +225,7 @@ Resources:
     Properties:
       AvailabilityZone:
         Fn::Select:
-        - '0'
+        - '2'
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
@@ -222,7 +245,7 @@ Resources:
     Properties:
       AvailabilityZone:
         Fn::Select:
-        - '1'
+        - '0'
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
@@ -264,7 +287,7 @@ Resources:
     Properties:
       AvailabilityZone:
         Fn::Select:
-        - '1'
+        - '2'
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
@@ -384,12 +407,9 @@ Resources:
       - Subnet02
       - Subnet03
       - Subnet04
-      - Subnet05
-      - Subnet06
       - VPCRouteTable
     Type: AWS::EC2::VPCEndpoint
     Properties: 
-      PrivateDnsEnabled: True
       RouteTableIds: 
         - !Ref VPCRouteTable
       ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.s3'
@@ -412,7 +432,8 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref CFNSecurityGroup
+      SecurityGroupIds: 
+        - !Ref CFNSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -432,7 +453,8 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref ECRVPCSecurityGroup
+      SecurityGroupIds: 
+        - !Ref ECRVPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -452,7 +474,8 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref EC2VPCSecurityGroup
+      SecurityGroupIds: 
+        - !Ref EC2VPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC 
   
@@ -472,7 +495,8 @@ Resources:
         - !Ref Subnet01
         - !Ref Subnet02
         - !Ref Subnet03
-      SecurityGroupIds: !Ref ECRVPCSecurityGroup
+      SecurityGroupIds: 
+        - !Ref ECRVPCSecurityGroup
       VpcEndpointType: Interface
       VpcId: !Ref VPC 
   
@@ -484,7 +508,7 @@ Outputs:
 
   SecurityGroups:
     Description: Security group for the cluster control plane communication with worker nodes
-    Value: !Join [ ",", [ !Ref ControlPlaneSecurityGroup ] ]
+    Value: !Join [ ",", [ !Ref EC2VPCSecurityGroup ] ]
 
   VpcId:
     Description: The VPC Id

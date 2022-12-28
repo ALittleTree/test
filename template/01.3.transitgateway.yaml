@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'transite gate way'
+Resources:
+  myTransitGateway:
+    Type: "AWS::EC2::TransitGateway"
+    Properties:
+      AmazonSideAsn: 64512
+      Description: "TGW Route Integration"
+      AutoAcceptSharedAttachments: "disable"
+      DefaultRouteTableAssociation: "enable"
+      DnsSupport: "enable"
+      VpnEcmpSupport: "enable"
+Outputs:
+
+  myTransitGatewayId: 
+    Description: Subnets IDs in the VPC
+    Value: !Ref myTransitGateway
