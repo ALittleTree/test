@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Resources:
-  NodeInstanceRole:
+  eksServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -9,18 +9,64 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - ec2.amazonaws.com
+                - eks.amazonaws.com
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-      Path: /
+        - "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+        - "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+      RoleName: eksServiceRole
 
-  NodeInstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
+  EKSonR53Policies:
+    Type: AWS::IAM::Policy
     Properties:
-      Path: /
-      Roles:
-        - Ref: NodeInstanceRole
+      PolicyName: EKSonR53
+      Roles: 
+        - !Ref eksServiceRole
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action: [
+                "route53:ListTrafficPolicyInstances",
+                "route53:GetTrafficPolicyInstanceCount",
+                "route53:GetChange",
+                "route53:ListTrafficPolicyVersions",
+                "route53:TestDNSAnswer",
+                "route53:GetHostedZone",
+                "route53:GetHealthCheck",
+                "route53:ListHostedZonesByName",
+                "route53:ListQueryLoggingConfigs",
+                "route53:GetCheckerIpRanges",
+                "route53:ListTrafficPolicies",
+                "route53:ListResourceRecordSets",
+                "route53:ListGeoLocations",
+                "route53:GetTrafficPolicyInstance",
+                "route53:GetHostedZoneCount",
+                "route53:GetHealthCheckCount",
+                "route53:GetQueryLoggingConfig",
+                "route53:ListReusableDelegationSets",
+                "route53:GetHealthCheckLastFailureReason",
+                "route53:GetHealthCheckStatus",
+                "route53:DisassociateVPCFromHostedZone",
+                "route53:ListTrafficPolicyInstancesByHostedZone",
+                "route53:ListHostedZones",
+                "route53:ListVPCAssociationAuthorizations",
+                "route53:GetReusableDelegationSetLimit",
+                "route53:GetReusableDelegationSet",
+                "route53:ListTagsForResource",
+                "route53:ListTagsForResources",
+                "route53:GetAccountLimit",
+                "route53:ListTrafficPolicyInstancesByPolicy",
+                "route53:ListHealthChecks",
+                "route53:GetGeoLocation",
+                "route53:GetHostedZoneLimit",
+                "route53:AssociateVPCWithHostedZone",
+                "route53:GetTrafficPolicy"
+          ]
+          Resource: '*'
+
+
+

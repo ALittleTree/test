@@ -48,7 +48,7 @@ Resources:
   NetworkLoadBalancerTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Join ["-" , [!Ref 'AWS::StackName', Target]]
+      Name: !Join ["-" , [!Ref 'AWS::StackName', Target,]]
       Port: 31138
       Protocol: TCP
       VpcId: !Ref VPCId

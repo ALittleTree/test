@@ -20,9 +20,9 @@ Parameters:
     Default: 172.30.97.0/24
     Description: The CIDR range for the VPC. This should be a valid private (RFC 1918) CIDR range.
 
-  TransitGatewayId:
-    Type: String
-    Description: The ID of a transit gateway.
+  # TransitGatewayId:
+  #   Type: String
+  #   Description: The ID of a transit gateway.
 
 #  PrefixListId:
 #    Type: String
@@ -127,30 +127,30 @@ Resources:
         Value: !Ref VpcName
 
 #######################VPC##############################
-  TransitGatewayAttachment:
-    DependsOn:
-      - VPC
-      - Subnet03
-      - Subnet04
-    Type: AWS::EC2::TransitGatewayAttachment
-    Properties: 
-      Options: 
-        ApplianceModeSupport: disable
-        DnsSupport: enable
-        Ipv6Support: disable
-      SubnetIds: 
-        !If [Is-DEVOrPre,[!Ref Subnet03,!Ref Subnet04],[!Ref Subnet03,!Ref Subnet04,!Ref Subnet05]]
-      Tags: 
-      - Key: Name
-        Value: !Join [" - ",["SDP",!Ref Environment] ]
-      TransitGatewayId: !Ref TransitGatewayId
-      VpcId: !Ref VPC
+  # TransitGatewayAttachment:
+  #   DependsOn:
+  #     - VPC
+  #     - Subnet03
+  #     - Subnet04
+  #   Type: AWS::EC2::TransitGatewayAttachment
+  #   Properties: 
+  #     Options: 
+  #       ApplianceModeSupport: disable
+  #       DnsSupport: enable
+  #       Ipv6Support: disable
+  #     SubnetIds: 
+  #       !If [Is-DEVOrPre,[!Ref Subnet03,!Ref Subnet04],[!Ref Subnet03,!Ref Subnet04,!Ref Subnet05]]
+  #     Tags: 
+  #     - Key: Name
+  #       Value: !Join [" - ",["SDP",!Ref Environment] ]
+  #     TransitGatewayId: !Ref TransitGatewayId
+  #     VpcId: !Ref VPC
 
 #####################RouteTable#########################
 
   VPCRouteTable:
-    DependsOn:
-      - TransitGatewayAttachment
+    # DependsOn:
+    #   - TransitGatewayAttachment
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
@@ -158,12 +158,12 @@ Resources:
       - Key: Name
         Value: !Ref VpcName
 
-  VPCRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref VPCRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      TransitGatewayId: !Ref TransitGatewayId
+  # VPCRoute:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref VPCRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     TransitGatewayId: !Ref TransitGatewayId
   
   # VPCRoute:
   #   DependsOn: S3VPCEndpoint

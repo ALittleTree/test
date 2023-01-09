@@ -9,26 +9,45 @@ Parameters:
     Type: String
     Default: RoleArn
     Description: the role arn for this eks
+  Environment:
+    Description: dev\pre\qua\prod
+    Type: String
+    Default: dev
+    AllowedValues: ['dev','pre','prd','qua']
+  Subnet01Id:
+    Description: Subnet01Id
+    Type: AWS::EC2::Subnet::Id
+  Subnet02Id:
+    Description: Subnet02Id
+    Type: AWS::EC2::Subnet::Id
+  Subnet03Id:
+    Description: Subnet03Id
+    Type: AWS::EC2::Subnet::Id  
+  Subnet04Id:
+    Description: Subnet04Id
+    Type: AWS::EC2::Subnet::Id
+  Subnet05Id:
+    Description: Subnet05Id
+    Type: AWS::EC2::Subnet::Id
+  Subnet06Id:
+    Description: Subnet06Id
+    Type: AWS::EC2::Subnet::Id 
+Conditions:
+  Is-DEVOrPre: !Or [!Equals [!Ref Environment, dev],!Equals [!Ref Environment, pre]]
+
 Resources:
   EKSCluster:
       Type: AWS::EKS::Cluster
       Properties:
         Name: !Ref EKSClusterName
-        Version: "1.20"
+        Version: "1.21"
         RoleArn: !Ref RoleArn
         ResourcesVpcConfig:
-          SecurityGroupIds:
-            - sg-6979fe18
-          SubnetIds:
-            - subnet-6782e71e
-            - subnet-e7e761ac
-          EndpointPublicAccess: false
+          SubnetIds: !If [Is-DEVOrPre,[!Ref Subnet01Id,!Ref Subnet02Id,!Ref Subnet03Id,!Ref Subnet04Id],[!Ref Subnet01Id,!Ref Subnet02Id,!Ref Subnet03Id,!Ref Subnet04Id,!Ref Subnet05Id,!Ref Subnet06Id]]
+          EndpointPublicAccess: true
           EndpointPrivateAccess: true
         Logging:
           ClusterLogging:
             EnabledTypes:
               - Type: api
               - Type: audit
-        Tags:
-          - Key: "key"
-            Value: "val"
