@@ -409,40 +409,44 @@ Resources:
       ToPort: 443
 
   NodeLaunchConfig:
-    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Type: "AWS::EC2::LaunchTemplate"
     Properties:
-      AssociatePublicIpAddress: "false"
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            DeleteOnTermination: true
-            VolumeSize: !Ref NodeVolumeSize
-            VolumeType: gp3
-            Encrypted: true
-      IamInstanceProfile: !Ref NodeInstanceProfile
-      ImageId: !If
-        - HasNodeImageId
-        - Ref: NodeImageId
-        - Ref: NodeImageIdSSMParam
-      InstanceType: !Ref NodeInstanceType
-      KeyName: !Ref KeyName
-      SecurityGroups:
-        - Ref: NodeSecurityGroup
-        - sg-0c6a2f20d2c50d34d
-      UserData: !Base64
-        "Fn::Sub": |
-          #!/bin/bash
-          set -o xtrace
-          /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
-          /opt/aws/bin/cfn-signal --exit-code $? \
-                   --stack  ${AWS::StackName} \
-                   --resource NodeGroup  \
-                   --region ${AWS::Region}
+      LaunchTemplateData:
+        NetworkInterfaces:
+          AssociatePublicIpAddress: "false"
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              DeleteOnTermination: true
+              VolumeSize: !Ref NodeVolumeSize
+              VolumeType: gp3
+              Encrypted: true
+        IamInstanceProfile: !Ref NodeInstanceProfile
+        ImageId: !If
+          - HasNodeImageId
+          - Ref: NodeImageId
+          - Ref: NodeImageIdSSMParam
+        InstanceType: !Ref NodeInstanceType
+        KeyName: !Ref KeyName
+        SecurityGroups:
+          - Ref: NodeSecurityGroup
+          - sg-0c6a2f20d2c50d34d
+        UserData: !Base64
+          "Fn::Sub": |
+            #!/bin/bash
+            set -o xtrace
+            /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+            /opt/aws/bin/cfn-signal --exit-code $? \
+                    --stack  ${AWS::StackName} \
+                    --resource NodeGroup  \
+                    --region ${AWS::Region}
   NodeGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
       DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
-      LaunchConfigurationName: !Ref NodeLaunchConfig
+      # LaunchConfigurationName: !Ref NodeLaunchConfig
+      LaunchTemplateId: !Ref NodeLaunchConfig
+      Version: !GetAtt NodeLaunchConfig.LatestVersionNumber
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
       MinSize: !Ref NodeAutoScalingGroupMinSize
       Tags:
