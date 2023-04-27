@@ -408,12 +408,10 @@ Resources:
       SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
       ToPort: 443
 
-  NodeLaunchConfig:
+  NodeLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        NetworkInterfaces:
-          AssociatePublicIpAddress: "false"
         BlockDeviceMappings:
           - DeviceName: /dev/xvda
             Ebs:
@@ -421,15 +419,16 @@ Resources:
               VolumeSize: !Ref NodeVolumeSize
               VolumeType: gp3
               Encrypted: true
-        IamInstanceProfile: !Ref NodeInstanceProfile
+        IamInstanceProfile:
+          Arn: !GetAtt NodeInstanceProfile.Arn
         ImageId: !If
           - HasNodeImageId
           - Ref: NodeImageId
           - Ref: NodeImageIdSSMParam
         InstanceType: !Ref NodeInstanceType
         KeyName: !Ref KeyName
-        SecurityGroups:
-          - Ref: NodeSecurityGroup
+        SecurityGroupIds:
+          - !Ref NodeSecurityGroup
           - sg-0c6a2f20d2c50d34d
         UserData: !Base64
           "Fn::Sub": |
@@ -440,13 +439,15 @@ Resources:
                     --stack  ${AWS::StackName} \
                     --resource NodeGroup  \
                     --region ${AWS::Region}
+                    
   NodeGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
       DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
-      # LaunchConfigurationName: !Ref NodeLaunchConfig
-      LaunchTemplateId: !Ref NodeLaunchConfig
-      Version: !GetAtt NodeLaunchConfig.LatestVersionNumber
+      # LaunchConfigurationName: !Ref NodeLaunchTemplate
+      LaunchTemplate:
+        LaunchTemplateId: !Ref NodeLaunchTemplate
+        Version: !GetAtt NodeLaunchTemplate.LatestVersionNumber
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
       MinSize: !Ref NodeAutoScalingGroupMinSize
       Tags:
