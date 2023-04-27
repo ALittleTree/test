@@ -1,0 +1,198 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  eksServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - eks.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+        - "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+      RoleName: eksServiceRole
+
+  EKSonR53Policies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: EKSonR53
+      Roles: 
+        - !Ref eksServiceRole
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action: [
+                "route53:ListTrafficPolicyInstances",
+                "route53:GetTrafficPolicyInstanceCount",
+                "route53:GetChange",
+                "route53:ListTrafficPolicyVersions",
+                "route53:TestDNSAnswer",
+                "route53:GetHostedZone",
+                "route53:GetHealthCheck",
+                "route53:ListHostedZonesByName",
+                "route53:ListQueryLoggingConfigs",
+                "route53:GetCheckerIpRanges",
+                "route53:ListTrafficPolicies",
+                "route53:ListResourceRecordSets",
+                "route53:ListGeoLocations",
+                "route53:GetTrafficPolicyInstance",
+                "route53:GetHostedZoneCount",
+                "route53:GetHealthCheckCount",
+                "route53:GetQueryLoggingConfig",
+                "route53:ListReusableDelegationSets",
+                "route53:GetHealthCheckLastFailureReason",
+                "route53:GetHealthCheckStatus",
+                "route53:DisassociateVPCFromHostedZone",
+                "route53:ListTrafficPolicyInstancesByHostedZone",
+                "route53:ListHostedZones",
+                "route53:ListVPCAssociationAuthorizations",
+                "route53:GetReusableDelegationSetLimit",
+                "route53:GetReusableDelegationSet",
+                "route53:ListTagsForResource",
+                "route53:ListTagsForResources",
+                "route53:GetAccountLimit",
+                "route53:ListTrafficPolicyInstancesByPolicy",
+                "route53:ListHealthChecks",
+                "route53:GetGeoLocation",
+                "route53:GetHostedZoneLimit",
+                "route53:AssociateVPCWithHostedZone",
+                "route53:GetTrafficPolicy"
+          ]
+          Resource: '*'
+
+
+  Resources:
+    SDPAmazonEKSCNIRoleDev:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        RoleName: SDP-AmazonEKSCNIRole-Dev
+
+  Resources:
+    SDPAmazonEKSCNIRoleQua:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        RoleName: SDP-AmazonEKSCNIRole-Qua
+
+  Resources:
+    SDPAmazonEKSEBSCSIDriverRoleDev:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        RoleName: SDP-AmazonEKSEBSCSIDriverRole-Dev
+
+  Resources:
+    SDPAmazonEKSEBSCSIDriverRoleQua:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        RoleName: SDP-AmazonEKSEBSCSIDriverRole-Qua
+
+  Resources:
+    SDPAmazonEKSEBSCSIDriverRoleQua:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        RoleName: SDP-AmazonEKSEBSCSIDriverRole-Qua
+
+  Resources:
+    SDPWorkersNodeInstanceRoleDev:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+          - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+          - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+          - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+          - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        RoleName: SDP-Workers-NodeInstanceRole-Dev
+
+  Resources:
+    SDPWorkersNodeInstanceRoleQua:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - eks.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+          - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+          - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+          - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+          - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        RoleName: SDP-Workers-NodeInstanceRole-Qua
+  
